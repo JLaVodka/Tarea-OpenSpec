@@ -19,7 +19,8 @@ def configure_test_secret(monkeypatch):
 def create_account(db_session, role_name, email):
     roles = seed_role_permissions(db_session)
     user = User(email=email, password_hash=hash_password("reservation test password"))
-    user.roles.append(roles[role_name])
+    role_names = role_name if isinstance(role_name, list) else [role_name]
+    user.roles.extend(roles[name] for name in role_names)
     db_session.add(user)
     db_session.commit()
     return user
@@ -252,6 +253,178 @@ def test_space_admin_cannot_create_request_and_availability_rejects_bad_interval
     assert create_response.status_code == 403
     assert invalid_availability.status_code == 422
     assert naive_availability.status_code == 422
+
+
+def test_exactly_four_hours_is_allowed(api_client, db_session):
+    student = create_account(db_session, "ESTUDIANTE", "student@university.edu")
+    space = create_space(db_session)
+    begins, ends = future_interval(duration=timedelta(hours=4))
+
+    response = api_client.post(
+        "/reservations",
+        json=request_payload(space.id, starts_at=begins, ends_at=ends),
+        headers=authorize(student),
+    )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "PENDIENTE"
+
+
+def test_four_hours_and_one_minute_is_rejected_with_clear_message(api_client, db_session):
+    student = create_account(db_session, "ESTUDIANTE", "student@university.edu")
+    space = create_space(db_session)
+    begins, ends = future_interval(duration=timedelta(hours=4, minutes=1))
+
+    response = api_client.post(
+        "/reservations",
+        json=request_payload(space.id, starts_at=begins, ends_at=ends),
+        headers=authorize(student),
+    )
+
+    assert response.status_code == 422
+    assert "cuatro horas" in response.json()["detail"].lower()
+    assert db_session.query(Reservation).count() == 0
+
+
+@pytest.mark.parametrize("state", [ReservationStatus.PENDIENTE, ReservationStatus.APROBADA])
+def test_contiguous_own_reservation_chain_over_four_hours_is_rejected(
+    api_client, db_session, state
+):
+    student = create_account(db_session, "ESTUDIANTE", "student@university.edu")
+    space = create_space(db_session)
+    begins, _ = future_interval()
+    existing_start = begins - timedelta(hours=3)
+    seed_reservation(db_session, student, space, existing_start, begins, state)
+
+    response = api_client.post(
+        "/reservations",
+        json=request_payload(
+            space.id, starts_at=begins, ends_at=begins + timedelta(hours=2)
+        ),
+        headers=authorize(student),
+    )
+
+    assert response.status_code == 422
+    assert "cuatro horas" in response.json()["detail"].lower()
+    assert db_session.query(Reservation).count() == 1
+
+
+def test_contiguous_chain_of_exactly_four_hours_is_allowed(api_client, db_session):
+    student = create_account(db_session, "ESTUDIANTE", "student@university.edu")
+    space = create_space(db_session)
+    begins, _ = future_interval()
+    seed_reservation(
+        db_session,
+        student,
+        space,
+        begins - timedelta(hours=3),
+        begins,
+        ReservationStatus.PENDIENTE,
+    )
+
+    response = api_client.post(
+        "/reservations",
+        json=request_payload(
+            space.id, starts_at=begins, ends_at=begins + timedelta(hours=1)
+        ),
+        headers=authorize(student),
+    )
+
+    assert response.status_code == 201
+
+
+@pytest.mark.parametrize("state", [ReservationStatus.RECHAZADA, ReservationStatus.CANCELADA])
+def test_rejected_or_cancelled_adjacent_reservation_does_not_count(api_client, db_session, state):
+    student = create_account(db_session, "ESTUDIANTE", "student@university.edu")
+    space = create_space(db_session)
+    begins, _ = future_interval()
+    seed_reservation(
+        db_session, student, space, begins - timedelta(hours=3), begins, state
+    )
+
+    response = api_client.post(
+        "/reservations",
+        json=request_payload(
+            space.id, starts_at=begins, ends_at=begins + timedelta(hours=2)
+        ),
+        headers=authorize(student),
+    )
+
+    assert response.status_code == 201
+
+
+def test_same_user_in_different_space_is_counted_separately(api_client, db_session):
+    student = create_account(db_session, "ESTUDIANTE", "student@university.edu")
+    first_space = create_space(db_session)
+    second_space = create_space(db_session)
+    begins, _ = future_interval()
+    seed_reservation(
+        db_session,
+        student,
+        first_space,
+        begins - timedelta(hours=3),
+        begins,
+        ReservationStatus.PENDIENTE,
+    )
+
+    response = api_client.post(
+        "/reservations",
+        json=request_payload(
+            second_space.id, starts_at=begins, ends_at=begins + timedelta(hours=2)
+        ),
+        headers=authorize(student),
+    )
+
+    assert response.status_code == 201
+
+
+def test_another_user_in_same_space_is_counted_separately(api_client, db_session):
+    first_student = create_account(db_session, "ESTUDIANTE", "first@university.edu")
+    second_student = create_account(db_session, "DOCENTE", "second@university.edu")
+    space = create_space(db_session)
+    begins, _ = future_interval()
+    seed_reservation(
+        db_session,
+        first_student,
+        space,
+        begins - timedelta(hours=3),
+        begins,
+        ReservationStatus.PENDIENTE,
+    )
+
+    response = api_client.post(
+        "/reservations",
+        json=request_payload(
+            space.id, starts_at=begins, ends_at=begins + timedelta(hours=2)
+        ),
+        headers=authorize(second_student),
+    )
+
+    assert response.status_code == 201
+
+
+@pytest.mark.parametrize(
+    "admin_role,applicant_role",
+    [("ADMIN_ESPACIOS", "DOCENTE"), ("ADMIN_SISTEMA", "ESTUDIANTE")],
+)
+def test_account_with_administrator_role_is_exempt_even_with_applicant_role(
+    api_client, db_session, admin_role, applicant_role
+):
+    manager_teacher = create_account(
+        db_session,
+        [applicant_role, admin_role],
+        f"{admin_role.lower()}-applicant@university.edu",
+    )
+    space = create_space(db_session)
+    begins, ends = future_interval(duration=timedelta(hours=5))
+
+    response = api_client.post(
+        "/reservations",
+        json=request_payload(space.id, starts_at=begins, ends_at=ends),
+        headers=authorize(manager_teacher),
+    )
+
+    assert response.status_code == 201
 
 
 def test_availability_uses_approved_only_and_semi_open_intervals(api_client, db_session):
