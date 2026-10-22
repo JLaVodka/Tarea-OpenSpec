@@ -31,13 +31,13 @@
 
 ## 6. Prevención de reservas simultáneas
 
-- [ ] 6.1 Escribir pruebas de coincidencia exacta, solapamiento parcial, adyacencia, espacios diferentes, cancelación del conflicto y aprobación concurrente. (Req: prevencion-reservas-simultaneas — Detectar solapamiento; Comprobar y escribir atómicamente)
-- [ ] 6.2 Implementar validación y transición atómicas para impedir doble aprobación en SQLite; documentar límites del mecanismo. (Req: prevencion-reservas-simultaneas — Comprobar y escribir atómicamente)
+- [x] 6.1 Escribir pruebas de coincidencia exacta, solapamiento parcial, adyacencia, espacios diferentes, cancelación del conflicto y aprobación concurrente. (Req: prevencion-reservas-simultaneas — Detectar solapamiento; Comprobar y escribir atómicamente)
+- [x] 6.2 Implementar validación y transición atómicas para impedir doble aprobación en SQLite; documentar límites del mecanismo. (Req: prevencion-reservas-simultaneas — Comprobar y escribir atómicamente)
 
 ## 7. Aprobación y rechazo
 
-- [ ] 7.1 Escribir pruebas de aprobación permitida/denegada, estados no pendientes, espacio inactivo, administrador fuera de ámbito y motivo de rechazo. (Req: aprobacion-rechazo — Aprobar solicitud pendiente; Rechazar con motivo)
-- [ ] 7.2 Implementar transiciones de aprobación/rechazo con actor, fecha, motivo y revalidación de disponibilidad dentro de la transacción. (Req: aprobacion-rechazo — Aprobar solicitud pendiente; Rechazar con motivo)
+- [x] 7.1 Escribir pruebas de aprobación permitida/denegada, estados no pendientes, espacio inactivo, administrador fuera de ámbito y motivo de rechazo. (Req: aprobacion-rechazo — Aprobar solicitud pendiente; Rechazar con motivo)
+- [x] 7.2 Implementar transiciones de aprobación/rechazo con actor, fecha, motivo y revalidación de disponibilidad dentro de la transacción. (Req: aprobacion-rechazo — Aprobar solicitud pendiente; Rechazar con motivo)
 
 ## 8. Cancelación e historial
 

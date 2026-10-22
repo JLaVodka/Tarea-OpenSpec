@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from pydantic import BaseModel, ConfigDict, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from app.reservations.models import ReservationStatus
 
@@ -43,3 +43,9 @@ class AvailabilityPublic(BaseModel):
     space_id: int
     active: bool
     available: bool
+
+
+class RejectionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    reason: str = Field(min_length=1, max_length=1000)

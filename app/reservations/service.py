@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.reservations.models import Reservation, ReservationStatus
+from app.reservations.models import Reservation, ReservationEvent, ReservationStatus
 from app.spaces.models import Space
 from app.users.models import User
 
@@ -24,6 +24,14 @@ class SpaceInactive(Exception):
 
 class ReservationConflict(Exception):
     """Una reserva aprobada o solicitud propia ya ocupa el intervalo."""
+
+
+class ReservationNotFound(Exception):
+    """No existe la solicitud indicada."""
+
+
+class SpaceUnavailable(Exception):
+    """El espacio no está activo para aprobar nuevas reservas."""
 
 
 def normalize_interval(starts_at: datetime, ends_at: datetime) -> tuple[datetime, datetime]:
@@ -108,3 +116,76 @@ def is_available(session: Session, space: Space, starts_at: datetime, ends_at: d
         ).limit(1)
     )
     return conflict is None
+
+
+def decide_reservation(
+    session: Session,
+    reservation_id: int,
+    actor: User,
+    *,
+    approve: bool,
+    reason: str | None = None,
+) -> Reservation:
+    reservation = session.get(Reservation, reservation_id)
+    if reservation is None:
+        raise ReservationNotFound
+
+    # Serializar todas las decisiones del mismo espacio evita dos aprobaciones
+    # solapadas, incluso si cada administrador procesa una solicitud distinta.
+    if session.bind is not None and session.bind.dialect.name == "sqlite":
+        session.connection().exec_driver_sql("BEGIN IMMEDIATE")
+    else:
+        session.execute(
+            select(Space.id).where(Space.id == reservation.space_id).with_for_update()
+        ).scalar_one()
+        reservation = session.execute(
+            select(Reservation)
+            .where(Reservation.id == reservation_id)
+            .with_for_update()
+        ).scalar_one()
+
+    if reservation.status != ReservationStatus.PENDIENTE:
+        session.rollback()
+        raise ReservationConflict("Solo pueden decidirse solicitudes pendientes")
+
+    space = session.get(Space, reservation.space_id)
+    if approve:
+        if space is None or not space.is_active:
+            session.rollback()
+            raise SpaceUnavailable
+        conflict = session.scalar(
+            select(Reservation.id).where(
+                Reservation.id != reservation.id,
+                Reservation.space_id == reservation.space_id,
+                Reservation.status == ReservationStatus.APROBADA,
+                Reservation.starts_at < reservation.ends_at,
+                Reservation.ends_at > reservation.starts_at,
+            ).limit(1)
+        )
+        if conflict is not None:
+            session.rollback()
+            raise ReservationConflict("El intervalo se solapa con una reserva aprobada")
+        reservation.status = ReservationStatus.APROBADA
+        event_type = "APROBADA"
+        details = {}
+    else:
+        normalized_reason = (reason or "").strip()
+        if not normalized_reason:
+            session.rollback()
+            raise ValueError("El motivo de rechazo es obligatorio")
+        reservation.status = ReservationStatus.RECHAZADA
+        event_type = "RECHAZADA"
+        details = {"reason": normalized_reason}
+
+    details["decided_at"] = datetime.now(timezone.utc).isoformat()
+    session.add(
+        ReservationEvent(
+            reservation_id=reservation.id,
+            actor_user_id=actor.id,
+            event_type=event_type,
+            details=details,
+        )
+    )
+    session.commit()
+    session.refresh(reservation)
+    return reservation

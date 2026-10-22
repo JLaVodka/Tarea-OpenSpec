@@ -9,13 +9,21 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.reservations.models import Reservation
-from app.reservations.schemas import AvailabilityPublic, ReservationCreate, ReservationPublic
+from app.reservations.schemas import (
+    AvailabilityPublic,
+    RejectionRequest,
+    ReservationCreate,
+    ReservationPublic,
+)
 from app.reservations.service import (
     InvalidInterval,
     ReservationConflict,
+    ReservationNotFound,
     SpaceInactive,
     SpaceNotFound,
+    SpaceUnavailable,
     create_reservation,
+    decide_reservation,
     is_available,
     normalize_interval,
 )
@@ -77,6 +85,52 @@ def get_reservation(reservation_id: int, session: Database, user: CurrentUser) -
     ):
         raise HTTPException(status_code=403, detail="Solicitud fuera del ámbito permitido")
     return reservation
+
+
+def _decide(
+    reservation_id: int,
+    session: Session,
+    user,
+    *,
+    approve: bool,
+    reason: str | None = None,
+) -> Reservation:
+    reservation = session.get(Reservation, reservation_id)
+    if reservation is None:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+    if not has_space_permission(user, reservation.space_id, "reservations", "review"):
+        raise HTTPException(status_code=403, detail="Solicitud fuera del ámbito asignado")
+    try:
+        return decide_reservation(
+            session, reservation_id, user, approve=approve, reason=reason
+        )
+    except ReservationNotFound:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada") from None
+    except ReservationConflict as error:
+        raise HTTPException(status_code=409, detail=str(error)) from None
+    except SpaceUnavailable:
+        raise HTTPException(
+            status_code=409, detail="El espacio está inactivo y no puede aprobarse"
+        ) from None
+
+
+@router.post("/reservations/{reservation_id}/approve", response_model=ReservationPublic)
+def approve_reservation(
+    reservation_id: int, session: Database, user: CurrentUser
+) -> Reservation:
+    return _decide(reservation_id, session, user, approve=True)
+
+
+@router.post("/reservations/{reservation_id}/reject", response_model=ReservationPublic)
+def reject_reservation(
+    reservation_id: int,
+    payload: RejectionRequest,
+    session: Database,
+    user: CurrentUser,
+) -> Reservation:
+    return _decide(
+        reservation_id, session, user, approve=False, reason=payload.reason
+    )
 
 
 @router.get("/availability", response_model=AvailabilityPublic)
