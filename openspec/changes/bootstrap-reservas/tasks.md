@@ -19,8 +19,8 @@
 
 ## 4. Gestión de espacios
 
-- [ ] 4.1 Escribir pruebas de CRUD, datos requeridos, capacidad inválida, estado inactivo, permisos y borrado con/sin referencias. (Req: gestion-espacios — Administrar espacios; Preservar integridad del espacio)
-- [ ] 4.2 Implementar CRUD de espacios, asignación de responsables, desactivación y borrado físico condicionado a ausencia de solicitudes. (Req: gestion-espacios — Administrar espacios; Preservar integridad del espacio)
+- [x] 4.1 Escribir pruebas de CRUD, datos requeridos, capacidad inválida, estado inactivo, permisos y borrado con/sin referencias. (Req: gestion-espacios — Administrar espacios; Preservar integridad del espacio)
+- [x] 4.2 Implementar CRUD de espacios, asignación de responsables, desactivación y borrado físico condicionado a ausencia de solicitudes. (Req: gestion-espacios — Administrar espacios; Preservar integridad del espacio)
 
 ## 5. Solicitudes y disponibilidad
 
