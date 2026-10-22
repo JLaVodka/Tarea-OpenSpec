@@ -14,8 +14,8 @@
 
 ## 3. Roles y permisos
 
-- [ ] 3.1 Escribir pruebas positivas/negativas para solicitantes, matriz por rol, ámbito asignado, roles combinados y denegación por defecto. (Req: roles-permisos — Autorizar operaciones de solicitantes; Limitar administración al ámbito de espacios; Limitar el rol de administrador del sistema; Combinar roles y denegar por defecto)
-- [ ] 3.2 Implementar asignación administrativa de roles y espacios, autorización por unión de roles y controles de ámbito. (Req: usuarios — Administrar cuentas; roles-permisos — Limitar administración al ámbito de espacios; Limitar el rol de administrador del sistema; Combinar roles y denegar por defecto)
+- [x] 3.1 Escribir pruebas positivas/negativas para solicitantes, matriz por rol, ámbito asignado, roles combinados y denegación por defecto. (Req: roles-permisos — Autorizar operaciones de solicitantes; Limitar administración al ámbito de espacios; Limitar el rol de administrador del sistema; Combinar roles y denegar por defecto)
+- [x] 3.2 Implementar asignación administrativa de roles y espacios, autorización por unión de roles y controles de ámbito. (Req: usuarios — Administrar cuentas; roles-permisos — Limitar administración al ámbito de espacios; Limitar el rol de administrador del sistema; Combinar roles y denegar por defecto)
 
 ## 4. Gestión de espacios
 

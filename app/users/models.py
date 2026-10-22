@@ -32,6 +32,12 @@ class User(Base):
         secondaryjoin="Role.id == user_roles.c.role_id",
         back_populates="users",
     )
+    administered_spaces: Mapped[list["Space"]] = relationship(
+        secondary="space_admin_assignments",
+        primaryjoin="User.id == space_admin_assignments.c.user_id",
+        secondaryjoin="Space.id == space_admin_assignments.c.space_id",
+        viewonly=True,
+    )
     reservations: Mapped[list["Reservation"]] = relationship(
         back_populates="requester", passive_deletes="all"
     )

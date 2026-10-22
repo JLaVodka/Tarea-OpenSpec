@@ -6,12 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.reservations.models import Reservation  # Registra relaciones ORM.
 from app.roles.models import Role, user_roles
+from app.roles.policy import ROLE_PERMISSIONS, seed_role_permissions
 from app.spaces.models import Space, space_admin_assignments
 from app.users.models import User
 from app.users.security import create_access_token, hash_password, verify_password
-
-
-ROLE_NAMES = ("ESTUDIANTE", "DOCENTE", "ADMIN_ESPACIOS", "ADMIN_SISTEMA")
 
 
 class AccountNotFound(Exception):
@@ -44,14 +42,7 @@ def public_user(user: User) -> dict:
 
 
 def _ensure_roles(session: Session) -> dict[str, Role]:
-    existing = {role.name: role for role in session.scalars(select(Role)).all()}
-    for role_name in ROLE_NAMES:
-        if role_name not in existing:
-            role = Role(name=role_name)
-            session.add(role)
-            existing[role_name] = role
-    session.flush()
-    return existing
+    return seed_role_permissions(session)
 
 
 def register_student(session: Session, email: str, password: str) -> User:

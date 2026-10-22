@@ -7,6 +7,7 @@ import pytest
 from pwdlib import PasswordHash
 
 from app.roles.models import Role, user_roles
+from app.roles.policy import seed_role_permissions
 from app.spaces.models import Space, space_admin_assignments
 from app.users.models import User
 
@@ -28,11 +29,7 @@ def login(client, *, email="student@university.edu", password="correct horse bat
 
 
 def create_system_admin(db_session, email="admin@university.edu"):
-    roles = {role.name: role for role in db_session.query(Role).all()}
-    for role_name in ("ESTUDIANTE", "DOCENTE", "ADMIN_ESPACIOS", "ADMIN_SISTEMA"):
-        if role_name not in roles:
-            roles[role_name] = Role(name=role_name)
-            db_session.add(roles[role_name])
+    roles = seed_role_permissions(db_session)
     user = User(
         email=email,
         password_hash=PasswordHash.recommended().hash("admin test password"),

@@ -49,6 +49,7 @@ Los permisos de varios roles se combinan por unión. No existen permisos individ
 - Las rutas de autenticación usan JSON (`POST /auth/register`, `POST /auth/login`) y las rutas protegidas reciben JWT Bearer. El JWT contiene el identificador del usuario, no sus roles; la API vuelve a leer los roles y el estado activo de la cuenta en cada solicitud para reflejar cambios administrativos inmediatamente.
 - `JWT_SECRET_KEY` se exige por entorno y debe tener al menos 32 bytes; no se incluye un secreto por defecto en el código. Los tokens duran 30 minutos por defecto, configurable con `JWT_ACCESS_TOKEN_MINUTES`; se adopta como supuesto técnico inicial para satisfacer tokens expirables, no como una política institucional inmutable.
 - La asignación de roles y espacios persiste quién la realizó y cuándo en las tablas asociativas, conforme al requisito de atribución. Se evita autorizar que una cuenta amplíe sus propios roles o ámbitos.
+- Los permisos se guardan en el catálogo relacional y se evalúan como unión de roles; los permisos desconocidos se deniegan. Los permisos de administración de espacios requieren además una asignación explícita del espacio al usuario con rol `ADMIN_ESPACIOS`.
 - Starlette actual depreca httpx tradicional en `TestClient`; se seleccionó `httpx2` para pruebas HTTP porque es la opción recomendada por la documentación de Starlette. Se conserva el patrón TestClient de FastAPI.
 
 ## Riesgos y validación

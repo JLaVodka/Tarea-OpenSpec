@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.roles.policy import has_permission
 from app.users.models import User
 from app.users.schemas import (
     AccountStatusUpdate,
@@ -70,7 +71,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 def require_system_admin(user: CurrentUser) -> User:
-    if not any(role.name == "ADMIN_SISTEMA" for role in user.roles):
+    if not has_permission(user, "accounts", "manage"):
         raise HTTPException(status_code=403, detail="Permiso insuficiente")
     return user
 
