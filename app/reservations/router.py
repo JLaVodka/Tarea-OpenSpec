@@ -18,6 +18,7 @@ from app.reservations.schemas import (
     ReservationPublic,
 )
 from app.reservations.service import (
+    DurationLimitExceeded,
     InvalidInterval,
     ReservationConflict,
     ReservationNotFound,
@@ -54,6 +55,11 @@ def request_reservation(
         raise HTTPException(status_code=403, detail="Permiso insuficiente")
     try:
         return create_reservation(session, user, payload.space_id, payload.starts_at, payload.ends_at)
+    except DurationLimitExceeded:
+        raise HTTPException(
+            status_code=422,
+            detail="No se permiten más de cuatro horas consecutivas para la misma persona y espacio",
+        ) from None
     except InvalidInterval as error:
         raise HTTPException(status_code=422, detail=str(error)) from None
     except SpaceNotFound:

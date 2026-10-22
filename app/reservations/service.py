@@ -1,6 +1,6 @@
 """Reglas de negocio de solicitudes y disponibilidad."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -24,6 +24,10 @@ class SpaceInactive(Exception):
 
 class ReservationConflict(Exception):
     """Una reserva aprobada o solicitud propia ya ocupa el intervalo."""
+
+
+class DurationLimitExceeded(Exception):
+    """La solicitud supera el máximo de cuatro horas consecutivas."""
 
 
 class ReservationNotFound(Exception):
@@ -90,6 +94,12 @@ def create_reservation(
         session.rollback()
         raise ReservationConflict
 
+    try:
+        validate_consecutive_duration(session, requester, space_id, starts_at, ends_at)
+    except DurationLimitExceeded:
+        session.rollback()
+        raise
+
     reservation = Reservation(
         requester_id=requester.id,
         space_id=space_id,
@@ -114,6 +124,70 @@ def create_reservation(
     session.commit()
     session.refresh(reservation)
     return reservation
+
+
+def validate_consecutive_duration(
+    session: Session,
+    requester: User,
+    space_id: int,
+    starts_at: datetime,
+    ends_at: datetime,
+) -> None:
+    """Limita la cadena contigua activa por solicitante y espacio."""
+    if any(role.name in {"ADMIN_ESPACIOS", "ADMIN_SISTEMA"} for role in requester.roles):
+        return
+
+    maximum = timedelta(hours=4)
+    if ends_at - starts_at > maximum:
+        raise DurationLimitExceeded
+
+    reservations = session.scalars(
+        select(Reservation).where(
+            Reservation.requester_id == requester.id,
+            Reservation.space_id == space_id,
+            Reservation.status.in_(
+                [ReservationStatus.PENDIENTE, ReservationStatus.APROBADA]
+            ),
+        )
+    ).all()
+
+    def utc(value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+    intervals = [
+        (utc(item.starts_at), utc(item.ends_at), False) for item in reservations
+    ]
+    intervals.append((starts_at, ends_at, True))
+    intervals.sort(key=lambda item: (item[0], item[1]))
+
+    chain_start: datetime | None = None
+    chain_end: datetime | None = None
+    contains_new_interval = False
+    for interval_start, interval_end, is_new in intervals:
+        if chain_end is None or interval_start > chain_end:
+            if (
+                contains_new_interval
+                and chain_start is not None
+                and chain_end is not None
+                and chain_end - chain_start > maximum
+            ):
+                raise DurationLimitExceeded
+            chain_start = interval_start
+            chain_end = interval_end
+            contains_new_interval = is_new
+            continue
+        chain_end = max(chain_end, interval_end)
+        contains_new_interval = contains_new_interval or is_new
+
+    if (
+        contains_new_interval
+        and chain_start is not None
+        and chain_end is not None
+        and chain_end - chain_start > maximum
+    ):
+        raise DurationLimitExceeded
 
 
 def is_available(session: Session, space: Space, starts_at: datetime, ends_at: datetime) -> bool:
