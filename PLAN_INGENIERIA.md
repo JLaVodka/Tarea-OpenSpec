@@ -113,7 +113,7 @@ Esta arquitectura mantiene bajo el coste de despliegue de un proyecto académico
 | Base local | SQLite | Instalación simple sin servicio externo para desarrollo y pruebas. |
 | Base objetivo portable | PostgreSQL | Motor relacional adecuado para concurrencia y despliegue multiusuario; migración no incluida hasta que se apruebe como objetivo. |
 | Autenticación | JWT; hash Argon2 o bcrypt | Token adecuado para API y almacenamiento no reversible de contraseñas; parámetros y biblioteca exactos se elegirán al implementar, con dependencias mantenidas. |
-| Pruebas | pytest, pytest-cov, httpx/TestClient | Pruebas unitarias e integración HTTP; cobertura reportable. |
+| Pruebas | pytest, pytest-cov, httpx2/TestClient | Pruebas unitarias e integración HTTP; cobertura reportable. Starlette recomienda actualmente httpx2 para TestClient. |
 | Migraciones/esquema | Creación controlada de esquema para el prototipo; Alembic si la evolución del modelo lo requiere | Mantiene simple la primera ejecución, reservando migraciones versionadas para cambios de esquema. Esta elección se confirmará antes de persistencia. |
 
 Las versiones concretas se fijarán en archivos de dependencias al iniciar implementación, no en este plan, para poder seleccionar versiones compatibles y mantenidas en ese momento.
@@ -164,7 +164,7 @@ La agrupación por módulo mantiene juntos los artefactos de una capacidad; `cor
 | Persistencia | Relacional, SQLite local y diseño portable a PostgreSQL: reservas, espacios, usuarios y eventos tienen relaciones e invariantes transaccionales. | NoSQL documental: flexibilidad de esquema no aporta ventaja suficiente y complica relaciones e integridad. Solo PostgreSQL desde el inicio: viable, pero exige servicio/configuración adicional en desarrollo; se puede adoptar cuando se defina el entorno institucional. |
 | Framework API | FastAPI: tipado, validación y OpenAPI integrados con Python. | Django/DRF: incluye administración y convenciones útiles, pero su estructura más amplia no se necesita para una API pequeña. Express: requiere cambiar a JavaScript/TypeScript y seleccionar más componentes para validación/persistencia; no mejora el ajuste al stack base propuesto. |
 | Autenticación API | JWT de corta duración más contraseñas con hash fuerte: se ajusta a consumidores REST y permite autorización explícita por rol. | Sesiones con cookies: buena opción para una aplicación web del mismo origen, pero añade gestión de sesión/CSRF que no se necesita en la API inicial. OAuth/SSO institucional: opción preferible si existe IdP, pero integración y proveedor no están especificados. |
-| Pruebas HTTP | pytest + httpx/TestClient y SQLite aislada: permite validar contratos y flujo API sin servidor externo. | Pruebas manuales únicamente: no son repetibles para regresión. Framework de pruebas distinto: no ofrece beneficio claro frente al ecosistema pytest del stack base. |
+| Pruebas HTTP | pytest + httpx2/TestClient y SQLite aislada: permite validar contratos y flujo API sin servidor externo; httpx2 evita usar la integración httpx que Starlette actual depreca. | Pruebas manuales únicamente: no son repetibles para regresión. Framework de pruebas distinto: no ofrece beneficio claro frente al ecosistema pytest del stack base. |
 
 ## 4. Estrategia de desarrollo
 
@@ -287,3 +287,4 @@ El estudiante, como responsable técnico, aprueba este plan y cada puerta de fas
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 0.1 | 2026-10-21 | Borrador inicial para revisión del responsable técnico. Stack y alcance propuestos según las instrucciones de la actividad; políticas no definidas registradas como supuestos. |
+| 0.2 | 2026-10-22 | Se ajusta el cliente de pruebas de `httpx` a `httpx2` conservando `TestClient`, porque Starlette actual depreca la integración anterior y recomienda `httpx2`. El cambio afecta solo dependencias de desarrollo y mantiene el diseño de pruebas HTTP aprobado. |
