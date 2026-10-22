@@ -6,10 +6,10 @@ Definir la creación de una petición de reserva vinculada a un solicitante, esp
 ## Requirements
 
 ### Requirement: Crear solicitud válida
-El sistema DEBE (SHALL) permitir que estudiantes y docentes autenticados creen una solicitud para sí mismos en un espacio activo, con fechas ISO 8601 que incluyan desplazamiento horario y un intervalo válido con `inicio < fin` y `inicio > ahora`. La solicitud se crea con estado `PENDIENTE` solo si no se solapa con una reserva aprobada del mismo espacio ni con otra solicitud pendiente solapada del mismo solicitante y espacio.
+El sistema DEBE (SHALL) permitir que estudiantes y docentes autenticados creen para sí una solicitud `PENDIENTE` en un espacio activo, con fechas ISO 8601 con desplazamiento horario, `inicio < fin` e `inicio > ahora`. El sistema no DEBE crear la solicitud si se solapa con una reserva `APROBADA` del espacio o una solicitud `PENDIENTE` solapada del mismo solicitante y espacio.
 
 #### Scenario: Solicitud válida
-- WHEN un estudiante o docente solicita un espacio activo con inicio futuro y fin posterior al inicio
+- WHEN un estudiante o docente solicita un espacio activo con inicio futuro, fin posterior al inicio y duración permitida
 - THEN el sistema guarda la solicitud como `PENDIENTE`, vinculada al actor autenticado
 
 #### Scenario: Fin igual o anterior al inicio
@@ -69,3 +69,41 @@ El sistema DEBE (SHALL) comprobar solicitudes propias pendientes solapadas e ins
 #### Scenario: Dos solicitudes propias concurrentes
 - WHEN dos peticiones simultáneas del mismo usuario intentan crear intervalos solapados para el mismo espacio
 - THEN como máximo una se guarda como `PENDIENTE` y la otra recibe un conflicto por duplicado
+
+### Requirement: Limitar reservas consecutivas a cuatro horas
+El sistema DEBE (SHALL) limitar a cuatro horas inclusive la cadena contigua activa de una persona sin rol administrativo para un mismo espacio. Para el cómputo cuentan `PENDIENTE` y `APROBADA`; se excluyen `RECHAZADA` y `CANCELADA`. Una cuenta con rol `ADMIN_ESPACIOS` o `ADMIN_SISTEMA` está exenta.
+
+#### Scenario: Permitir exactamente cuatro horas
+- WHEN un solicitante sin rol administrativo crea una solicitud de exactamente cuatro horas sin extender una cadena activa más allá del límite
+- THEN el sistema guarda la solicitud `PENDIENTE`
+
+#### Scenario: Rechazar cuatro horas y un minuto
+- WHEN un solicitante sin rol administrativo crea una solicitud individual de cuatro horas y un minuto
+- THEN el sistema rechaza la solicitud, informa que el máximo es cuatro horas y no crea un registro
+
+#### Scenario: Rechazar una cadena contigua que supera cuatro horas
+- WHEN una persona tiene un intervalo `PENDIENTE` o `APROBADA` de tres horas y solicita inmediatamente después otro intervalo de dos horas para el mismo espacio
+- THEN el sistema rechaza la nueva solicitud con un mensaje claro del límite de cuatro horas
+
+#### Scenario: Solicitudes contiguas de una persona en espacios distintos
+- WHEN una persona solicita intervalos contiguos que superan cuatro horas en total, pero corresponden a espacios distintos
+- THEN el sistema evalúa cada espacio por separado y permite la nueva solicitud si no viola otra regla
+
+#### Scenario: Intervalos contiguos de personas distintas
+- WHEN otra persona solicita un intervalo contiguo en el mismo espacio y la duración excedería cuatro horas solo al sumar ambas personas
+- THEN el sistema calcula el límite únicamente para la nueva persona y permite la solicitud si no viola otra regla
+
+#### Scenario: Una solicitud cancelada o rechazada no suma al límite
+- WHEN la única solicitud contigua de la persona está `RECHAZADA` o `CANCELADA`
+- THEN el sistema no la cuenta y evalúa la nueva solicitud con los intervalos activos restantes
+
+#### Scenario: Eximir cuentas con rol administrativo
+- WHEN una cuenta con `ADMIN_ESPACIOS` o `ADMIN_SISTEMA` y rol solicitante crea una solicitud propia de más de cuatro horas
+- THEN el sistema no aplica el límite de duración de cuatro horas a esa cuenta
+
+### Requirement: Comprobar el límite consecutivo atómicamente
+El sistema DEBE (SHALL) comprobar el máximo de cuatro horas consecutivas e insertar la nueva solicitud en una operación atómica, de modo que peticiones simultáneas no puedan eludir el límite por continuidad.
+
+#### Scenario: Dos solicitudes contiguas concurrentes superan el límite
+- WHEN dos peticiones simultáneas contiguas de la misma persona y el mismo espacio, que individualmente cumplen cuatro horas, juntas superan cuatro horas
+- THEN como máximo se guarda una solicitud y la otra recibe un conflicto claro por el límite consecutivo

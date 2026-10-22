@@ -1,10 +1,10 @@
 # Propuesta: limitar reservas consecutivas a cuatro horas
 
-## Por qué
+## Why
 
 La institución establece que ninguna persona debe ocupar un espacio académico durante más de cuatro horas consecutivas. La regla necesita aplicarse al recibir solicitudes, para evitar reservas extensas y cadenas de reservas contiguas que superen el límite.
 
-## Qué cambia
+## What Changes
 
 - Se añadirá una duración máxima de cuatro horas a la capacidad `solicitudes-reserva`.
 - Se acumularán intervalos adyacentes de la misma persona y el mismo espacio que estén `PENDIENTE` o `APROBADA`; `RECHAZADA` y `CANCELADA` no cuentan.

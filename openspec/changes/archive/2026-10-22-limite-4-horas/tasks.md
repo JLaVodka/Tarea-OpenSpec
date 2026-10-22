@@ -9,4 +9,4 @@
 
 - [x] 2.1 Escribir una prueba concurrente de solicitudes propias contiguas que individualmente cumplen el máximo, pero juntas lo exceden. (Req: solicitudes-reserva — Comprobar el límite consecutivo atómicamente)
 - [x] 2.2 Aplicar el bloqueo existente, ejecutar suite completa con cobertura, corregir regresiones y registrar la salida real. (Req: solicitudes-reserva — Comprobar el límite consecutivo atómicamente; todas las capacidades)
-- [ ] 2.3 Actualizar `docs/TRAZABILIDAD.md`, archivar el change y validar las specs consolidadas en modo estricto. (Req: todas las capacidades)
+- [x] 2.3 Actualizar `docs/TRAZABILIDAD.md`, archivar el change y validar las specs consolidadas en modo estricto. (Req: todas las capacidades)
