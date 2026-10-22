@@ -34,7 +34,7 @@ User puede tener varios Role; Role agrupa Permission. Space tiene muchas Reserva
 - Especificar permisos y errores, además del camino feliz y casos límite.
 - Usar intervalos semiabiertos `[inicio, fin)` como hipótesis para que reservas adyacentes no se solapen. La regla final de conflictos y qué estados bloquean una franja debe quedar explícita en las specs.
 - Comprobar solapamiento del mismo espacio con `nuevo_inicio < existente_fin AND existente_inicio < nuevo_fin`. La validación y escritura deben ser atómicas y cubrir carreras; el mecanismo concreto se especificará antes de implementar.
-- No inventar políticas institucionales. Zona horaria, duración máxima, anticipación, horarios hábiles, reglas de cancelación y excepciones permanecen como decisiones pendientes si no hay aprobación explícita.
+- No inventar políticas institucionales. La duración máxima de cuatro horas consecutivas está aprobada y se define en `changes/limite-4-horas`; cuatro horas son inclusivas, la continuidad suma solicitudes pendientes y reservas aprobadas por persona/espacio, y se excluyen cuentas administradoras. Zona horaria institucional, anticipación, horarios hábiles y excepciones adicionales permanecen pendientes si no hay aprobación explícita.
 - No implementar requisitos que no hayan pasado revisión y aprobación. Si falta un requisito, proponer primero un change OpenSpec.
 
 ## Flujo de trabajo
