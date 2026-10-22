@@ -159,6 +159,12 @@ docs/
 
 La agrupación por módulo mantiene juntos los artefactos de una capacidad; `core` contiene solo infraestructura transversal. Las dependencias deben apuntar hacia servicios/dominio y persistencia, no desde módulos de negocio hacia routers.
 
+### Ajuste documentado durante la implementación
+
+La implementación conserva el monolito modular, FastAPI, Pydantic y SQLAlchemy, pero concreta la organización con estos ajustes: disponibilidad y auditoría viven dentro del módulo `reservations`; no hay paquetes de repositorios separados y las operaciones de persistencia usan directamente `Session` en servicios y algunas rutas; las pruebas están agrupadas por capacidad en `tests/` en vez de subcarpetas unitarias/integración/reglas. La decisión se tomó para mantener juntas las reglas que comparten el modelo `Reservation` y evitar clases repositorio que solo reenviarían llamadas de SQLAlchemy en este prototipo de un único motor activo. Se descarta la separación física inmediata de `availability`, `audit` y repositorios por el coste de mantenimiento adicional en esta escala.
+
+El impacto es acoplamiento mayor entre algunos módulos HTTP y SQLAlchemy y una vía de cambio de persistencia menos aislada. Las reglas transaccionales críticas de reservas siguen centralizadas en `app/reservations/service.py` y cubiertas por pruebas; antes de añadir una segunda base de datos o escalar el despliegue, se debe extraer la persistencia de los routers a servicios/repositorios y volver a ejecutar la suite de concurrencia contra PostgreSQL.
+
 ### Tabla comparativa de decisiones técnicas
 
 | Decisión | Selección y motivo | Alternativas descartadas y motivo |
@@ -292,3 +298,4 @@ El estudiante, como responsable técnico, aprueba este plan y cada puerta de fas
 | 0.1 | 2026-10-21 | Borrador inicial para revisión del responsable técnico. Stack y alcance propuestos según las instrucciones de la actividad; políticas no definidas registradas como supuestos. |
 | 0.2 | 2026-10-22 | Se ajusta el cliente de pruebas de `httpx` a `httpx2` conservando `TestClient`, porque Starlette actual depreca la integración anterior y recomienda `httpx2`. El cambio afecta solo dependencias de desarrollo y mantiene el diseño de pruebas HTTP aprobado. |
 | 0.3 | 2026-10-22 | Se incorpora la regla institucional aprobada de máximo cuatro horas consecutivas por persona y espacio: cuatro horas inclusive, acumulación de solicitudes pendientes/aprobadas contiguas, y exclusión de cuentas administradoras. La regla afecta las validaciones de solicitudes y su estrategia de concurrencia; no requiere migración de datos. |
+| 0.4 | 2026-10-22 | Se documenta el ajuste de estructura real: disponibilidad/auditoría agrupadas en `reservations`, persistencia ORM directa desde servicios y algunas rutas y pruebas agrupadas por capacidad. Se registra la justificación, el acoplamiento resultante y el trabajo requerido antes de introducir otro motor o despliegue multiinstancia. |
