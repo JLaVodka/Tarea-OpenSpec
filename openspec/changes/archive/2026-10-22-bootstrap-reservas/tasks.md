@@ -48,6 +48,6 @@
 
 ## 9. Integración y trazabilidad
 
-- [ ] 9.1 Ejecutar suite completa tras cada grupo, corregir regresiones y registrar salidas reales. (Req: todas las capacidades)
-- [ ] 9.2 Actualizar `docs/TRAZABILIDAD.md` con cada requisito, escenario, prueba y archivo de código implementado. (Req: todas las capacidades)
-- [ ] 9.3 Completar README de instalación/ejecución y revisar el diff contra este change aprobado. (Req: todas las capacidades)
+- [x] 9.1 Ejecutar suite completa tras cada grupo, corregir regresiones y registrar salidas reales. (Req: todas las capacidades)
+- [x] 9.2 Actualizar `docs/TRAZABILIDAD.md` con cada requisito, escenario, prueba y archivo de código implementado. (Req: todas las capacidades)
+- [x] 9.3 Completar README de instalación/ejecución y revisar el diff contra este change aprobado. (Req: todas las capacidades)
