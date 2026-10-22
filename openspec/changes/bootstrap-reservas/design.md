@@ -16,6 +16,7 @@ Este change define el contrato inicial de ocho capacidades para una API universi
 6. **Cancelación:** el solicitante puede cancelar sus solicitudes `PENDIENTE` o `APROBADA` sin plazo límite. El administrador de espacios asignado puede forzar la cancelación de esos estados solo con motivo obligatorio. La cancelación por `ADMIN_SISTEMA` sin rol de espacios se deniega.
 7. **Errores:** se devuelven errores de validación, autenticación, autorización, inexistencia o conflicto con mensaje claro y sin exponer hashes/token/secretos. No se congela aquí un esquema HTTP de error específico.
 8. **Asignación al crear espacio:** por decisión aprobada por el responsable técnico, un usuario con rol `ADMIN_ESPACIOS` que crea un espacio queda automáticamente asignado como administrador de ese espacio. La asignación registra al propio creador en `assigned_by_user_id`; así puede administrarlo inmediatamente y queda trazable quién originó el alta. Se descarta crear espacios sin responsable asignado.
+9. **Serialización de solicitudes:** al crear una solicitud, SQLite abre una transacción de escritura con `BEGIN IMMEDIATE` antes de comprobar solapamientos; PostgreSQL bloquea la fila del espacio con `SELECT ... FOR UPDATE`. La verificación de reserva aprobada/duplicado propio y la inserción ocurren bajo ese bloqueo. La prueba de concurrencia usa dos sesiones SQLite independientes. PostgreSQL es objetivo de portabilidad, pero no está disponible en este entorno para ejecutar la misma prueba contra ese motor.
 
 ## Matriz inicial de permisos
 

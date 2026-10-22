@@ -24,10 +24,10 @@
 
 ## 5. Solicitudes y disponibilidad
 
-- [ ] 5.1 Escribir pruebas de solicitud válida, fechas inválidas/pasadas/iguales a ahora, falta de offset, espacio inactivo, aprobaciones conflictivas, duplicado propio, solicitantes distintos y duplicado concurrente. (Req: solicitudes-reserva — Crear solicitud válida; Evitar duplicados propios concurrentes)
-- [ ] 5.2 Implementar creación atómica y consulta de solicitudes con ámbito por solicitante/administrador y validación de conflictos/duplicados. (Req: solicitudes-reserva — Crear solicitud válida; Consultar solicitudes; Evitar duplicados propios concurrentes)
-- [ ] 5.3 Escribir pruebas de consulta libre, conflicto exacto/parcial, adyacencia, estados no bloqueantes, espacio inactivo y falta de autenticación. (Req: disponibilidad — Consultar disponibilidad; No ofrecer espacios inactivos como reservables)
-- [ ] 5.4 Implementar consulta de disponibilidad usando intervalos semiabiertos y solo reservas aprobadas como bloqueo. (Req: disponibilidad — Consultar disponibilidad; No ofrecer espacios inactivos como reservables)
+- [x] 5.1 Escribir pruebas de solicitud válida, fechas inválidas/pasadas/iguales a ahora, falta de offset, espacio inactivo, aprobaciones conflictivas, duplicado propio, solicitantes distintos y duplicado concurrente. (Req: solicitudes-reserva — Crear solicitud válida; Evitar duplicados propios concurrentes)
+- [x] 5.2 Implementar creación atómica y consulta de solicitudes con ámbito por solicitante/administrador y validación de conflictos/duplicados. (Req: solicitudes-reserva — Crear solicitud válida; Consultar solicitudes; Evitar duplicados propios concurrentes)
+- [x] 5.3 Escribir pruebas de consulta libre, conflicto exacto/parcial, adyacencia, estados no bloqueantes, espacio inactivo y falta de autenticación. (Req: disponibilidad — Consultar disponibilidad; No ofrecer espacios inactivos como reservables)
+- [x] 5.4 Implementar consulta de disponibilidad usando intervalos semiabiertos y solo reservas aprobadas como bloqueo. (Req: disponibilidad — Consultar disponibilidad; No ofrecer espacios inactivos como reservables)
 
 ## 6. Prevención de reservas simultáneas
 
