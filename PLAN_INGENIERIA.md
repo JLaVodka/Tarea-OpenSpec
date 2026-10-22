@@ -6,7 +6,7 @@
 - La primera entrega será una API REST para un único despliegue institucional. La interfaz web, integración con calendarios, notificaciones externas y alta disponibilidad quedan fuera del alcance inicial.
 - Estudiantes y docentes podrán solicitar reservas; un administrador de espacios gestionará el catálogo y la decisión de solicitudes. El administrador del sistema gestionará cuentas y roles. Esta asignación inicial de responsabilidades deberá confirmarse en las especificaciones antes de implementar.
 - Para evitar aceptar solicitudes fuera de la política, el plan considera que una reserva comienza como pendiente y solo se confirma mediante aprobación. El flujo final, incluidos permisos y estados, se concretará en OpenSpec.
-- Las fechas y horas se intercambiarán en formato ISO 8601. La zona horaria institucional, duración máxima, anticipación permitida, horarios hábiles y reglas de cancelación aún no están definidos; no se fijan valores de negocio sin aprobación.
+- Las fechas y horas se intercambiarán en formato ISO 8601. Por decisión aprobada, una solicitud puede durar hasta cuatro horas inclusive; intervalos adyacentes de la misma persona en el mismo espacio se acumulan si están `PENDIENTE` o `APROBADA`. Cuentas con rol administrativo están excluidas. La zona horaria institucional, anticipación permitida, horarios hábiles y otras reglas de cancelación aún no están definidos; no se fijan valores sin aprobación.
 - SQLite se usará en desarrollo y pruebas. La solución no dependerá deliberadamente de características exclusivas de SQLite y mantendrá una vía de migración a PostgreSQL.
 - Supuesto de concurrencia: el mecanismo que valida y crea una reserva deberá ejecutarse dentro de una transacción que serialice escrituras relevantes; el mecanismo concreto se decidirá y probará para SQLite y se revisará para PostgreSQL antes de producción multiinstancia.
 
@@ -62,6 +62,7 @@ Una solicitud pendiente no bloqueará por sí sola una franja salvo que la polí
 | Must | Usuarios, autenticación segura y autorización RBAC | Protege acciones y datos según el actor. |
 | Must | Catálogo y CRUD de espacios con estado activo/inactivo | Provee la entidad cuya disponibilidad se administra. |
 | Must | Crear solicitudes con validación de datos y fechas | Centraliza el proceso de solicitud. |
+| Must | Limitar a cuatro horas consecutivas la ocupación por persona y espacio | Evita superar la duración institucional mediante una solicitud larga o varias solicitudes adyacentes. |
 | Must | Consultar disponibilidad y evitar reservas aprobadas solapadas | Resuelve el conflicto operativo principal. |
 | Must | Aprobar/rechazar con actor, fecha y motivo de rechazo | Da trazabilidad a la decisión. |
 | Must | Cancelar según permisos/estado y consultar historial | Permite administrar el ciclo y auditarlo. |
@@ -131,6 +132,8 @@ Se usará un modelo relacional con claves foráneas, restricciones simples (unic
 | ReservationEvent | Reserva, actor, tipo de evento, fecha/hora y motivo/detalle pertinente. Permite historial append-only de decisiones y cancelaciones. |
 
 **Prevención de solapamientos:** se adoptará el intervalo semiabierto `[inicio, fin)`, de modo que una reserva que termina a las 10:00 y otra que empieza a las 10:00 sean adyacentes y compatibles. Hay conflicto para el mismo espacio cuando `nuevo_inicio < existente_fin AND existente_inicio < nuevo_fin` y la reserva existente bloquea disponibilidad. La consulta y la transición a aprobada/creación bloqueante deben ocurrir en una transacción; la validación nunca se separará de la escritura. Para SQLite se deberá serializar la sección de escritura (por ejemplo, adquirir bloqueo de escritura antes de consultar y crear, si el driver/ORM permite garantizarlo) y probar solicitudes simultáneas. Para PostgreSQL se evaluará aislamiento/locking transaccional o una restricción de exclusión por rango como defensa adicional. Una consulta previa desde el cliente no es suficiente para prevenir carreras. La solución elegida y sus límites deberán documentarse y probarse en la fase de implementación.
+
+**Límite de duración aprobado:** cada solicitud puede abarcar cuatro horas exactas, pero no más. Las solicitudes `PENDIENTE` y reservas `APROBADA` contiguas de la misma persona y el mismo espacio forman una secuencia cuyo tiempo total no puede superar cuatro horas; espacios distintos y personas distintas se evalúan por separado. Las solicitudes `RECHAZADA` y `CANCELADA` no consumen el límite. Cuentas con `ADMIN_ESPACIOS` o `ADMIN_SISTEMA` están excluidas, incluso si también tienen un rol solicitante. La comprobación debe realizarse en la misma sección transaccional que inserta la solicitud para evitar que peticiones simultáneas eludan la regla.
 
 ### Organización de componentes (estructura de carpetas)
 
@@ -242,7 +245,7 @@ Los casos y el resultado observado se vincularán a escenarios; no se afirmará 
 | Riesgo | Probabilidad | Impacto | Mitigación |
 |---|---|---|---|
 | Aceptar dos reservas solapadas por una carrera concurrente | Media | Alto | Validar dentro de transacción serializada, bloquear antes de comprobar cuando aplique y crear pruebas simultáneas; evaluar restricción de exclusión al migrar a PostgreSQL. |
-| Políticas institucionales incompletas (horarios, zona, límites, cancelación) | Alta | Alto | Registrar supuestos, convertir dudas en decisiones antes de implementar la regla afectada y exigir escenarios explícitos en specs. |
+| Políticas institucionales incompletas (horarios, zona, anticipación, excepciones de cancelación) | Alta | Alto | Registrar supuestos, convertir dudas en decisiones antes de implementar la regla afectada y exigir escenarios explícitos en specs. |
 | Asignación excesiva o insuficiente de permisos | Media | Alto | Matriz rol-acción aprobada, pruebas positivas y negativas por rol, autorización en servicios además de endpoints sensibles. |
 | Fechas ambiguas por zona horaria o conversión | Media | Alto | ISO 8601 con zona, normalización consistente a UTC en almacenamiento y pruebas de límites; confirmar la zona institucional antes de producción. |
 | SQLite no representa fielmente el comportamiento concurrente de producción | Media | Alto | Probar el mecanismo local, documentar límite de instancia única y verificar transacciones/índices con PostgreSQL antes de un despliegue multiinstancia. |
@@ -288,3 +291,4 @@ El estudiante, como responsable técnico, aprueba este plan y cada puerta de fas
 |---|---|---|
 | 0.1 | 2026-10-21 | Borrador inicial para revisión del responsable técnico. Stack y alcance propuestos según las instrucciones de la actividad; políticas no definidas registradas como supuestos. |
 | 0.2 | 2026-10-22 | Se ajusta el cliente de pruebas de `httpx` a `httpx2` conservando `TestClient`, porque Starlette actual depreca la integración anterior y recomienda `httpx2`. El cambio afecta solo dependencias de desarrollo y mantiene el diseño de pruebas HTTP aprobado. |
+| 0.3 | 2026-10-22 | Se incorpora la regla institucional aprobada de máximo cuatro horas consecutivas por persona y espacio: cuatro horas inclusive, acumulación de solicitudes pendientes/aprobadas contiguas, y exclusión de cuentas administradoras. La regla afecta las validaciones de solicitudes y su estrategia de concurrencia; no requiere migración de datos. |
