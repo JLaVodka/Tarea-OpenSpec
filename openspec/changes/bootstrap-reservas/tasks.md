@@ -2,10 +2,10 @@
 
 ## 1. Fundación y persistencia
 
-- [ ] 1.1 Crear la estructura modular FastAPI, configuración por entorno y sesión SQLAlchemy para SQLite. (Req: todas las capacidades)
-- [ ] 1.2 Definir modelos y relaciones de usuarios, roles y permisos, con unicidad de correo normalizado. (Req: usuarios — Registrar estudiantes; Administrar cuentas; roles-permisos — Combinar roles y denegar por defecto)
-- [ ] 1.3 Definir modelos de espacios, reservas y eventos, claves foráneas e índices de consulta. (Req: gestion-espacios; solicitudes-reserva; cancelacion-historial — Consultar historial auditado)
-- [ ] 1.4 Escribir fixtures con base SQLite aislada y configuración de dependencias para la API. (Req: todas las capacidades)
+- [x] 1.1 Crear la estructura modular FastAPI, configuración por entorno y sesión SQLAlchemy para SQLite. (Req: todas las capacidades)
+- [x] 1.2 Escribir fixtures con base SQLite aislada y configuración de dependencias para la API. (Req: todas las capacidades)
+- [x] 1.3 Definir modelos y relaciones de usuarios, roles y permisos, con unicidad de correo normalizado. (Req: usuarios — Registrar estudiantes; Administrar cuentas; roles-permisos — Combinar roles y denegar por defecto)
+- [x] 1.4 Definir modelos de espacios, reservas y eventos, claves foráneas e índices de consulta. (Req: gestion-espacios; solicitudes-reserva; cancelacion-historial — Consultar historial auditado)
 
 ## 2. Usuarios y autenticación
 
