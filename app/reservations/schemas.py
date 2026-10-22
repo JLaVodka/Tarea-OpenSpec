@@ -49,3 +49,26 @@ class RejectionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     reason: str = Field(min_length=1, max_length=1000)
+
+
+class CancellationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    reason: str | None = Field(default=None, max_length=1000)
+
+
+class ReservationEventPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    reservation_id: int
+    actor_user_id: int | None
+    event_type: str
+    details: dict
+    occurred_at: datetime
+
+    @field_serializer("occurred_at")
+    def serialize_utc(self, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)

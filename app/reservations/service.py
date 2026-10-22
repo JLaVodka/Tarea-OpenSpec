@@ -98,6 +98,19 @@ def create_reservation(
         status=ReservationStatus.PENDIENTE,
     )
     session.add(reservation)
+    session.flush()
+    session.add(
+        ReservationEvent(
+            reservation_id=reservation.id,
+            actor_user_id=requester.id,
+            event_type="SOLICITADA",
+            details={
+                "starts_at": starts_at.isoformat(),
+                "ends_at": ends_at.isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
+    )
     session.commit()
     session.refresh(reservation)
     return reservation
@@ -183,6 +196,54 @@ def decide_reservation(
             reservation_id=reservation.id,
             actor_user_id=actor.id,
             event_type=event_type,
+            details=details,
+        )
+    )
+    session.commit()
+    session.refresh(reservation)
+    return reservation
+
+
+def cancel_reservation(
+    session: Session,
+    reservation_id: int,
+    actor: User,
+    *,
+    reason: str | None = None,
+) -> Reservation:
+    reservation = session.get(Reservation, reservation_id)
+    if reservation is None:
+        raise ReservationNotFound
+    if session.bind is not None and session.bind.dialect.name == "sqlite":
+        session.connection().exec_driver_sql("BEGIN IMMEDIATE")
+    else:
+        session.execute(
+            select(Space.id).where(Space.id == reservation.space_id).with_for_update()
+        ).scalar_one()
+        reservation = session.execute(
+            select(Reservation)
+            .where(Reservation.id == reservation_id)
+            .with_for_update()
+        ).scalar_one()
+
+    if reservation.status not in {ReservationStatus.PENDIENTE, ReservationStatus.APROBADA}:
+        session.rollback()
+        raise ReservationConflict("Solo pueden cancelarse solicitudes pendientes o aprobadas")
+
+    details = {"decided_at": datetime.now(timezone.utc).isoformat()}
+    if reason is not None:
+        normalized_reason = reason.strip()
+        if not normalized_reason:
+            session.rollback()
+            raise ValueError("El motivo de cancelación es obligatorio")
+        details["reason"] = normalized_reason
+
+    reservation.status = ReservationStatus.CANCELADA
+    session.add(
+        ReservationEvent(
+            reservation_id=reservation.id,
+            actor_user_id=actor.id,
+            event_type="CANCELADA",
             details=details,
         )
     )

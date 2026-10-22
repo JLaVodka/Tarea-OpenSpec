@@ -41,10 +41,10 @@
 
 ## 8. Cancelación e historial
 
-- [ ] 8.1 Escribir pruebas de cancelación propia sin plazo, cancelación administrativa con/sin motivo, estados no cancelables y ámbito. (Req: cancelacion-historial — Cancelar reserva)
-- [ ] 8.2 Implementar cancelación por solicitante o administrador asignado, liberar disponibilidad y registrar eventos auditables. (Req: cancelacion-historial — Cancelar reserva; Consultar historial auditado)
-- [ ] 8.3 Escribir pruebas de consulta cronológica del historial, permisos por ámbito e inmutabilidad desde la API. (Req: cancelacion-historial — Consultar historial auditado)
-- [ ] 8.4 Implementar consulta de historial y protección de eventos contra modificación/eliminación por la API. (Req: cancelacion-historial — Consultar historial auditado)
+- [x] 8.1 Escribir pruebas de cancelación propia sin plazo, cancelación administrativa con/sin motivo, estados no cancelables y ámbito. (Req: cancelacion-historial — Cancelar reserva)
+- [x] 8.2 Implementar cancelación por solicitante o administrador asignado, liberar disponibilidad y registrar eventos auditables. (Req: cancelacion-historial — Cancelar reserva; Consultar historial auditado)
+- [x] 8.3 Escribir pruebas de consulta cronológica del historial, permisos por ámbito e inmutabilidad desde la API. (Req: cancelacion-historial — Consultar historial auditado)
+- [x] 8.4 Implementar consulta de historial y protección de eventos contra modificación/eliminación por la API. (Req: cancelacion-historial — Consultar historial auditado)
 
 ## 9. Integración y trazabilidad
 
