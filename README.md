@@ -65,6 +65,8 @@ La suite cubre API, autenticación y permisos, validación de intervalos, solapa
 
 Las operaciones protegidas requieren `Authorization: Bearer <token>`. Las fechas deben usar ISO 8601 con desplazamiento horario, por ejemplo `2030-04-20T09:00:00-05:00`.
 
+Para solicitudes de cuentas sin rol administrativo se permite una duración máxima inclusiva de cuatro horas consecutivas en el mismo espacio. El sistema acumula solicitudes `PENDIENTE` y reservas `APROBADA` contiguas de la misma persona; solicitudes rechazadas/canceladas, otras personas y otros espacios no suman. Las cuentas con rol administrativo están exentas según las reglas aprobadas en OpenSpec.
+
 ## Estructura
 
 ```text
