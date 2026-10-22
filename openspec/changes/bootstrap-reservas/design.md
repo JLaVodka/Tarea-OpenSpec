@@ -43,6 +43,14 @@ Los permisos de varios roles se combinan por unión. No existen permisos individ
 - Permitir a `ADMIN_SISTEMA` aprobar por defecto: descartado porque el plan separa administración técnica de decisiones de espacios.
 - Eliminar físicamente espacios que ya tienen historial: descartado por pérdida de integridad y auditoría; se desactivan.
 
+## Decisiones de implementación de identidad
+
+- Se eligieron `pwdlib` con Argon2 y PyJWT con firma HS256: cumplen la decisión aprobada de hash fuerte y JWT, y están documentados como integración directa por FastAPI. Se descartó implementar criptografía propia o agregar un proveedor OAuth/SSO no definido por la institución.
+- Las rutas de autenticación usan JSON (`POST /auth/register`, `POST /auth/login`) y las rutas protegidas reciben JWT Bearer. El JWT contiene el identificador del usuario, no sus roles; la API vuelve a leer los roles y el estado activo de la cuenta en cada solicitud para reflejar cambios administrativos inmediatamente.
+- `JWT_SECRET_KEY` se exige por entorno y debe tener al menos 32 bytes; no se incluye un secreto por defecto en el código. Los tokens duran 30 minutos por defecto, configurable con `JWT_ACCESS_TOKEN_MINUTES`; se adopta como supuesto técnico inicial para satisfacer tokens expirables, no como una política institucional inmutable.
+- La asignación de roles y espacios persiste quién la realizó y cuándo en las tablas asociativas, conforme al requisito de atribución. Se evita autorizar que una cuenta amplíe sus propios roles o ámbitos.
+- Starlette actual depreca httpx tradicional en `TestClient`; se seleccionó `httpx2` para pruebas HTTP porque es la opción recomendada por la documentación de Starlette. Se conserva el patrón TestClient de FastAPI.
+
 ## Riesgos y validación
 
 La atomicidad real depende del motor y del aislamiento. Se exigirá una prueba concurrente y se documentará el límite operativo de SQLite antes de implementar. La matriz detallada de permisos y la coherencia de estados se revisarán en `openspec/REVISION_SPECS.md` antes de programar.

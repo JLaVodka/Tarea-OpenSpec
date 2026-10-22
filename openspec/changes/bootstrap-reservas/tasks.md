@@ -9,8 +9,8 @@
 
 ## 2. Usuarios y autenticación
 
-- [ ] 2.1 Escribir pruebas de registro, correo normalizado duplicado, rol inicial, credenciales, cuenta inactiva, token inválido/expirado y autoasignación de permisos. (Req: usuarios — Registrar estudiantes; Administrar cuentas; Autenticar sin exponer secretos)
-- [ ] 2.2 Implementar repositorio y servicios de alta, hash de contraseña, autenticación JWT, administración de cuentas, roles y asignaciones de espacios. (Req: usuarios — Registrar estudiantes; Administrar cuentas; Autenticar sin exponer secretos)
+- [x] 2.1 Escribir pruebas de registro, correo normalizado duplicado, rol inicial, credenciales, cuenta inactiva, token inválido/expirado y autoasignación de permisos. (Req: usuarios — Registrar estudiantes; Administrar cuentas; Autenticar sin exponer secretos)
+- [x] 2.2 Implementar repositorio y servicios de alta, hash de contraseña, autenticación JWT, administración de cuentas, roles y asignaciones de espacios. (Req: usuarios — Registrar estudiantes; Administrar cuentas; Autenticar sin exponer secretos)
 
 ## 3. Roles y permisos
 

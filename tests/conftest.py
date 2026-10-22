@@ -13,7 +13,7 @@ from app.db.session import get_db
 
 @pytest.fixture
 def db_session(tmp_path) -> Session:
-    """Crea un esquema SQLite temporal por prueba y elimina sus recursos."""
+    """Crea un archivo SQLite temporal y compartido entre hilos por prueba."""
     database_path = tmp_path / "reservas_test.db"
     test_engine = create_database_engine(f"sqlite:///{database_path}")
     Base.metadata.create_all(test_engine)

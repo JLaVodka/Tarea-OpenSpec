@@ -41,6 +41,21 @@ def test_email_is_unique_after_trim_and_case_normalization(db_session):
         db_session.commit()
 
 
+def test_distinct_email_addresses_are_allowed(db_session):
+    from app.users.models import User
+
+    db_session.add_all(
+        [
+            User(email="first@university.edu", password_hash="hash-a"),
+            User(email="second@university.edu", password_hash="hash-b"),
+        ]
+    )
+
+    db_session.commit()
+
+    assert db_session.query(User).count() == 2
+
+
 def test_space_capacity_must_be_positive(db_session):
     from app.spaces.models import Space
 
