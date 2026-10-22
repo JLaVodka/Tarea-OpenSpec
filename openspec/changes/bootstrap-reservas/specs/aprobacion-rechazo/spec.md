@@ -25,19 +25,19 @@ El sistema DEBE (SHALL) permitir al administrador de espacios asignado aprobar u
 - WHEN un administrador de espacios intenta decidir una solicitud fuera de su ámbito
 - THEN el sistema deniega la operación sin cambiar la solicitud
 
-#### Scenario: Administrador de sistema sin permiso de negocio
-- WHEN un administrador del sistema intenta aprobar sin permiso explícito `reservas:decidir`
+#### Scenario: Administrador de sistema sin rol de espacios
+- WHEN un usuario con solo el rol `ADMIN_SISTEMA` intenta aprobar una solicitud
 - THEN el sistema deniega la operación
 
 ### Requirement: Rechazar con motivo
-El sistema DEBE (SHALL) permitir al administrador de espacios asignado rechazar una solicitud `PENDIENTE` únicamente con un motivo no vacío y registrar actor, momento y motivo.
+El sistema DEBE (SHALL) permitir al administrador de espacios asignado rechazar una solicitud `PENDIENTE` únicamente con un motivo que no quede vacío al quitar espacios externos, y registrar actor, momento y motivo.
 
 #### Scenario: Rechazo con motivo
 - WHEN el administrador asignado rechaza una solicitud pendiente con motivo no vacío
 - THEN el estado cambia a `RECHAZADA` y el motivo queda asociado al evento de decisión
 
 #### Scenario: Rechazo sin motivo
-- WHEN el administrador intenta rechazar sin motivo o con texto vacío
+- WHEN el administrador intenta rechazar sin motivo o con texto vacío/compuesto solo por espacios
 - THEN el sistema rechaza la transición y mantiene el estado `PENDIENTE`
 
 #### Scenario: Rechazo repetido
