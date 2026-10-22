@@ -1,19 +1,22 @@
 # Diseño: límite de cuatro horas consecutivas
 
-## Estado de decisiones
+## Decisiones aprobadas
 
-Este diseño está pendiente de las decisiones del responsable técnico. No hay deltas de especificación ni tareas de implementación hasta resolverlas.
+- **Inclusividad:** cuatro horas exactas se permiten; una duración mayor se rechaza.
+- **Agrupación de continuidad:** sumar intervalos adyacentes de la misma persona en el mismo espacio. Cuentan reservas `PENDIENTE` y `APROBADA`; no cuentan `RECHAZADA` ni `CANCELADA`. Espacios diferentes y personas diferentes se evalúan por separado.
+- **Roles:** la regla aplica a cuentas solicitantes. Se excluye una cuenta si tiene `ADMIN_ESPACIOS` o `ADMIN_SISTEMA`, aunque tenga además un rol solicitante. Esta interpretación explícita resuelve el caso de roles combinados.
+- **Datos previos:** no se modifica ningún registro existente. Las reservas `PENDIENTE` y `APROBADA` previas pueden formar una cadena con una nueva solicitud y hacer que esta se rechace; las rechazadas y canceladas no afectan el cómputo. No se requiere cambio de esquema.
 
-## Opciones presentadas
+## Decisión técnica
 
-- **Inclusividad:** permitir exactamente cuatro horas y rechazar duraciones superiores, o interpretar cuatro horas como límite exclusivo.
-- **Agrupación de continuidad:** sumar reservas adyacentes de la misma persona en el mismo espacio o medir cada solicitud por separado. Debe definirse si cuentan solicitudes `PENDIENTE` además de reservas `APROBADA`; las reservas `RECHAZADA` y `CANCELADA` no deberían consumir tiempo reservado.
-- **Alcance por rol:** aplicar la restricción a todo actor que solicita para sí mismo o limitarla a determinados roles.
+La validación individual y la suma de intervalos adyacentes se ejecutarán dentro de la misma sección crítica transaccional que detecta duplicados propios. Se consultarán registros `PENDIENTE` y `APROBADA` del mismo solicitante y espacio; al agregar el nuevo intervalo, se calculará la extensión temporal de su cadena contigua. Una cadena con duración total de hasta cuatro horas se permite. Si supera cuatro horas, se rechaza con un mensaje que identifica el límite. La operación conserva la serialización SQLite (`BEGIN IMMEDIATE`) y PostgreSQL (bloqueo de fila del espacio).
 
-## Impactos de implementación previstos
+## Impacto
 
-La comprobación debe ejecutarse en el servicio de reservas antes de persistir una nueva solicitud y formar parte de la misma sección crítica que evita duplicados propios. Las pruebas de frontera deben usar instantes UTC y verificar intervalos semiabiertos. Los datos existentes se conservan; el impacto sobre solicitudes ya creadas se limita a que puedan impedir o no una nueva solicitud contigua según los estados que se aprueben.
+La spec modificada es `solicitudes-reserva`. No cambian entidades, columnas ni estados, por lo que no se requiere migración. La prueba concurrente debe demostrar que dos solicitudes adyacentes propias que juntas excederían cuatro horas no pueden persistirse ambas. Los escenarios requieren cuatro horas exactas permitidas, cuatro horas y un minuto rechazadas, continuidad excesiva, distintos espacios, otros usuarios, error claro y exención administrativa.
 
-## Alternativas por decidir
+## Alternativas descartadas
 
-La alternativa más simple sería limitar individualmente cada petición; no detectaría cadenas de solicitudes contiguas. La alternativa acumulativa por persona y espacio evita eludir el máximo mediante reservas adyacentes, pero requiere consultar las solicitudes activas del mismo intervalo temporal. La decisión corresponde al responsable técnico.
+- Validar solo la duración de cada solicitud: descartado porque una persona podría superar el límite mediante varias solicitudes contiguas.
+- Sumar solicitudes de espacios diferentes o de usuarios diferentes: descartado porque la regla limita la ocupación consecutiva del mismo espacio por una persona.
+- Contar solicitudes rechazadas o canceladas: descartado porque dejaron de representar tiempo reservado.
