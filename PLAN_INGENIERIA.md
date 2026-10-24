@@ -3,7 +3,7 @@
 ## Supuestos
 
 - La institución es una universidad con espacios compartidos por varios programas y usuarios autenticados. No se dispone todavía de políticas institucionales formales ni de un proveedor de identidad que deban integrarse.
-- La primera entrega será una API REST para un único despliegue institucional. La interfaz web, integración con calendarios, notificaciones externas y alta disponibilidad quedan fuera del alcance inicial.
+- La primera entrega será una aplicación web local para un único despliegue institucional, formada por una interfaz ligera servida por FastAPI y la API REST existente. La interfaz usará HTML, CSS y JavaScript sin framework ni compilación separada; calendarios, notificaciones externas y alta disponibilidad quedan fuera del alcance inicial.
 - Estudiantes y docentes podrán solicitar reservas; un administrador de espacios gestionará el catálogo y la decisión de solicitudes. El administrador del sistema gestionará cuentas y roles. Esta asignación inicial de responsabilidades deberá confirmarse en las especificaciones antes de implementar.
 - Para evitar aceptar solicitudes fuera de la política, el plan considera que una reserva comienza como pendiente y solo se confirma mediante aprobación. El flujo final, incluidos permisos y estados, se concretará en OpenSpec.
 - Las fechas y horas se intercambiarán en formato ISO 8601. Por decisión aprobada, una solicitud puede durar hasta cuatro horas inclusive; intervalos adyacentes de la misma persona en el mismo espacio se acumulan si están `PENDIENTE` o `APROBADA`. Cuentas con rol administrativo están excluidas. La zona horaria institucional, anticipación permitida, horarios hábiles y otras reglas de cancelación aún no están definidos; no se fijan valores sin aprobación.
@@ -41,9 +41,9 @@ La separación entre administrador de espacios y administrador del sistema evita
 
 ### Alcance (incluido / excluido) y limitaciones del sistema
 
-**Incluido en el producto inicial:** API REST; autenticación; usuarios y roles; CRUD de espacios; solicitudes de reserva; consulta y validación de disponibilidad; prevención de solapamientos; aprobación, rechazo y cancelación; historial/auditoría; pruebas automatizadas; documentación de instalación y operación local.
+**Incluido en el producto inicial:** interfaz web en español para autenticación y operaciones autorizadas por rol; API REST; usuarios y roles; CRUD de espacios; solicitudes de reserva; consulta y validación de disponibilidad; prevención de solapamientos; aprobación, rechazo y cancelación; historial/auditoría; comando local para provisionar el primer administrador del sistema; pruebas automatizadas; documentación de instalación y operación local.
 
-**Excluido de la primera entrega:** interfaz gráfica completa; sincronización con calendarios; correo, SMS o notificaciones push; pagos; reservas recurrentes; integración SSO/directorio institucional; aplicación móvil; despliegue productivo, alta disponibilidad y operación de infraestructura. Se podrán proponer como cambios futuros, no se asumirán como requisitos.
+**Excluido de la primera entrega:** interfaz móvil nativa; sincronización con calendarios; correo, SMS o notificaciones push; pagos; reservas recurrentes; integración SSO/directorio institucional; despliegue productivo, alta disponibilidad y operación de infraestructura. Se podrán proponer como cambios futuros, no se asumirán como requisitos.
 
 **Limitaciones:** SQLite es apropiado para desarrollo y pruebas y para una instancia de baja concurrencia; su bloqueo de escritura limita el escalado concurrente. La primera versión no sustituye las políticas institucionales que aún deben definirse (zona horaria, plazos, capacidad, horarios, retención de auditoría y excepciones). Las restricciones legales y de privacidad aplicables deben ser verificadas por la institución antes de producción.
 
@@ -68,7 +68,7 @@ Una solicitud pendiente no bloqueará por sí sola una franja salvo que la polí
 | Must | Cancelar según permisos/estado y consultar historial | Permite administrar el ciclo y auditarlo. |
 | Should | Documentación OpenAPI y ejemplos reproducibles | Facilita la integración y revisión académica. |
 | Should | Cobertura de errores de autorización y concurrencia | Reduce el riesgo de fallos en reglas críticas. |
-| Could | Interfaz web mínima | Mejora la demostración, pero no es necesaria para validar la API. |
+| Must | Interfaz web sencilla para autenticación, espacios, disponibilidad y solicitudes; herramientas administrativas según rol | Permite presentar y utilizar el sistema desde el navegador, manteniendo las reglas en la API. |
 | Could | Notificaciones y exportación de calendario | Complementan la operación; requieren políticas e integraciones aún no definidas. |
 | Won't (inicial) | Microservicios, pagos, recurrencias y SSO | Aumentan alcance y operación sin ser necesarios para el problema mínimo. |
 
@@ -99,7 +99,7 @@ Cada incremento se deriva de requisitos aprobados en OpenSpec, desarrolla prueba
 
 ### Arquitectura seleccionada y justificación
 
-Se propone un **monolito modular en capas**: routers HTTP/API → servicios de aplicación y dominio → repositorios/ORM → base de datos. Los esquemas Pydantic separan los contratos de entrada/salida del modelo persistente. La autorización se aplica en los límites de API y servicios para que una llamada interna no evada las reglas. La configuración se inyecta para facilitar pruebas con una base aislada.
+Se propone un **monolito modular en capas**: interfaz HTML/CSS/JavaScript servida por FastAPI → routers HTTP/API → servicios de aplicación y dominio → persistencia ORM → base de datos. Los esquemas Pydantic separan los contratos de entrada/salida del modelo persistente. La autorización se aplica en el servidor para que una llamada directa a la API no evada las reglas; ocultar controles en la interfaz es solo una ayuda de navegación. La configuración se inyecta para facilitar pruebas con una base aislada.
 
 Esta arquitectura mantiene bajo el coste de despliegue de un proyecto académico y hace explícitos los límites entre transporte, reglas y persistencia. Permite extraer componentes en el futuro si hay una necesidad demostrada; no se anticipa operación distribuida.
 
@@ -109,6 +109,7 @@ Esta arquitectura mantiene bajo el coste de despliegue de un proyecto académico
 |---|---|---|
 | Lenguaje/runtime | Python 3 | Sintaxis accesible, ecosistema maduro y disponibilidad de herramientas de prueba. |
 | API | FastAPI | API REST tipada, validación integrada y generación de OpenAPI con poca infraestructura adicional. |
+| Interfaz | HTML, CSS y JavaScript nativos servidos desde el mismo origen por FastAPI | Formularios, tablas y navegación por rol no justifican un segundo runtime, compilador ni despliegue frontend. Se descartan React/Vue en esta entrega por su costo de instalación y mantenimiento adicional. |
 | Persistencia/ORM | SQLAlchemy 2 | Abstracción relacional portable, consultas explícitas y transacciones. |
 | Validación | Pydantic | Contratos de API tipados y validación de datos. |
 | Base local | SQLite | Instalación simple sin servicio externo para desarrollo y pruebas. |
@@ -116,6 +117,9 @@ Esta arquitectura mantiene bajo el coste de despliegue de un proyecto académico
 | Autenticación | JWT; hash Argon2 o bcrypt | Token adecuado para API y almacenamiento no reversible de contraseñas; parámetros y biblioteca exactos se elegirán al implementar, con dependencias mantenidas. |
 | Pruebas | pytest, pytest-cov, httpx2/TestClient | Pruebas unitarias e integración HTTP; cobertura reportable. Starlette recomienda actualmente httpx2 para TestClient. |
 | Migraciones/esquema | Creación controlada de esquema para el prototipo; Alembic si la evolución del modelo lo requiere | Mantiene simple la primera ejecución, reservando migraciones versionadas para cambios de esquema. Esta elección se confirmará antes de persistencia. |
+| Servidor ASGI | Uvicorn, declarado como dependencia de ejecución | Es el servidor usado en las instrucciones de ejecución y necesario para servir tanto API como interfaz; no se dependerá de una instalación manual fuera de los manifiestos. |
+
+El primer administrador se provisionará mediante un comando local interactivo, no mediante un endpoint público ni una credencial predeterminada. El comando verificará que aún no exista un `ADMIN_SISTEMA`, solicitará contraseña sin mostrarla y aplicará el mismo hash seguro de las cuentas existentes. Esta decisión permite configurar las operaciones administrativas en una instalación vacía sin abrir autorregistro privilegiado.
 
 Las versiones concretas se fijarán en archivos de dependencias al iniciar implementación, no en este plan, para poder seleccionar versiones compatibles y mantenidas en ese momento.
 
@@ -299,3 +303,4 @@ El estudiante, como responsable técnico, aprueba este plan y cada puerta de fas
 | 0.2 | 2026-10-22 | Se ajusta el cliente de pruebas de `httpx` a `httpx2` conservando `TestClient`, porque Starlette actual depreca la integración anterior y recomienda `httpx2`. El cambio afecta solo dependencias de desarrollo y mantiene el diseño de pruebas HTTP aprobado. |
 | 0.3 | 2026-10-22 | Se incorpora la regla institucional aprobada de máximo cuatro horas consecutivas por persona y espacio: cuatro horas inclusive, acumulación de solicitudes pendientes/aprobadas contiguas, y exclusión de cuentas administradoras. La regla afecta las validaciones de solicitudes y su estrategia de concurrencia; no requiere migración de datos. |
 | 0.4 | 2026-10-22 | Se documenta el ajuste de estructura real: disponibilidad/auditoría agrupadas en `reservations`, persistencia ORM directa desde servicios y algunas rutas y pruebas agrupadas por capacidad. Se registra la justificación, el acoplamiento resultante y el trabajo requerido antes de introducir otro motor o despliegue multiinstancia. |
+| 0.5 | 2026-10-23 | Por solicitud y aprobación del estudiante, la primera entrega incluye una interfaz web en español servida por FastAPI, sin framework frontend, y un comando local interactivo para provisionar el primer administrador. Se actualizan alcance, prioridades y stack; la API conserva autoridad sobre validación y permisos. Calendario, notificaciones, SSO y despliegue productivo siguen fuera del alcance. |
