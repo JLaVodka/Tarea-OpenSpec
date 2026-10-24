@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#102a43">
+    <meta name="description" content="Gestión de espacios académicos y solicitudes de reserva.">
+    <title>Reservas Académicas | Campus</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="stylesheet" href="/assets/styles.css">
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Reservas Académicas, inicio">
+        <span class="brand-mark" aria-hidden="true">CA</span>
+        <span><strong>Campus</strong><small>Reservas académicas</small></span>
+      </a>
+      <div id="session-summary" class="session-summary" hidden>
+        <span id="session-user"></span>
+        <button id="logout-button" class="button button-quiet" type="button">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <main id="app-main" class="page-shell">
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+      <section id="auth-view" class="auth-layout" aria-labelledby="welcome-title">
+        <div class="welcome-panel">
+          <p class="eyebrow">Tu campus, mejor organizado</p>
+          <h1 id="welcome-title">Encuentra tu espacio. Planea tu próximo proyecto.</h1>
+          <p>Consulta disponibilidad y gestiona tus solicitudes de laboratorios, auditorios y salas académicas desde un solo lugar.</p>
+          <div class="welcome-note"><span aria-hidden="true">✦</span> Reservas claras, espacios listos para aprender.</div>
+        </div>
+        <div class="auth-card">
+          <div class="auth-heading">
+            <p class="eyebrow">Portal universitario</p>
+            <h2>Bienvenido</h2>
+            <p>Inicia sesión o crea tu cuenta de estudiante.</p>
+          </div>
+          <form id="login-form" class="form-stack">
+            <label for="login-email">Correo electrónico</label>
+            <input id="login-email" name="email" type="email" autocomplete="username" placeholder="tu@universidad.edu" required>
+            <label for="login-password">Contraseña</label>
+            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+            <button class="button button-primary button-wide" type="submit">Iniciar sesión <span aria-hidden="true">→</span></button>
+          </form>
+          <details class="register-details">
+            <summary>¿Primera vez aquí? Crea una cuenta</summary>
+            <form id="register-form" class="form-stack register-form">
+              <label for="register-email">Correo institucional</label>
+              <input id="register-email" name="email" type="email" autocomplete="email" required>
+              <label for="register-password">Crea una contraseña</label>
+              <input id="register-password" name="password" type="password" autocomplete="new-password" required>
+              <button class="button button-secondary button-wide" type="submit">Crear cuenta de estudiante</button>
+            </form>
+          </details>
+          <p class="small-print">El acceso administrativo es gestionado por la institución.</p>
+        </div>
+      </section>
+
+      <section id="workspace-view" hidden>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">PORTAL DEL CAMPUS</p>
+            <h1>Hola, <span id="greeting-name">bienvenido</span></h1>
+            <p>Administra tus espacios y solicitudes académicas.</p>
+          </div>
+          <div class="heading-badge"><span class="status-dot"></span> Sistema disponible</div>
+        </div>
+
+        <nav class="main-nav" aria-label="Secciones principales">
+          <button class="nav-link is-active" data-panel="overview-panel" type="button">Resumen</button>
+          <button class="nav-link" data-panel="spaces-panel" type="button">Espacios</button>
+          <button class="nav-link" data-panel="reservations-panel" type="button">Mis solicitudes</button>
+          <button id="admin-nav" class="nav-link" data-panel="admin-panel" type="button" hidden>Administración</button>
+        </nav>
+
+        <section id="overview-panel" class="content-panel">
+          <div class="section-heading"><div><p class="eyebrow">VISTA GENERAL</p><h2>Tu actividad</h2></div></div>
+          <div class="summary-grid">
+            <article class="summary-card"><span class="summary-icon icon-blue" aria-hidden="true">⌂</span><div><p>Espacios disponibles</p><strong id="space-count">0</strong></div></article>
+            <article class="summary-card"><span class="summary-icon icon-gold" aria-hidden="true">◷</span><div><p>Mis solicitudes</p><strong id="reservation-count">0</strong></div></article>
+            <article class="summary-card"><span class="summary-icon icon-green" aria-hidden="true">✓</span><div><p>Aprobadas</p><strong id="approved-count">0</strong></div></article>
+          </div>
+          <div class="welcome-card">
+            <div><p class="eyebrow">¿QUÉ NECESITAS?</p><h2>Un espacio para hacer grandes ideas.</h2><p>Busca un lugar, revisa el horario y envía tu solicitud en pocos pasos.</p></div>
+            <button class="button button-primary" data-go-panel="spaces-panel" type="button">Explorar espacios <span aria-hidden="true">→</span></button>
+          </div>
+          <div class="section-heading"><div><p class="eyebrow">PRÓXIMOS PASOS</p><h2>Solicitudes recientes</h2></div><button class="text-button" data-go-panel="reservations-panel" type="button">Ver todas →</button></div>
+          <div id="recent-reservations" class="card-list"></div>
+        </section>
+
+        <section id="spaces-panel" class="content-panel" hidden>
+          <div class="section-heading"><div><p class="eyebrow">CATÁLOGO DEL CAMPUS</p><h2>Encuentra tu espacio</h2><p>Consulta los espacios activos y verifica horarios antes de solicitar.</p></div></div>
+          <form id="availability-form" class="filter-card form-grid">
+            <div><label for="availability-space">Espacio</label><select id="availability-space" name="space_id" required></select></div>
+            <div><label for="availability-start">Desde</label><input id="availability-start" name="starts_at" type="datetime-local" required></div>
+            <div><label for="availability-end">Hasta</label><input id="availability-end" name="ends_at" type="datetime-local" required></div>
+            <button class="button button-primary" type="submit">Consultar horario</button>
+          </form>
+          <div id="availability-result" class="availability-result" aria-live="polite" hidden></div>
+          <div class="section-heading compact-heading"><div><p class="eyebrow">ESPACIOS</p><h2>Explora el catálogo</h2></div></div>
+          <div id="spaces-list" class="space-grid"></div>
+        </section>
+
+        <section id="reservations-panel" class="content-panel" hidden>
+          <div class="section-heading"><div><p class="eyebrow">PLANIFICA TU ACTIVIDAD</p><h2>Nueva solicitud</h2><p>La solicitud se revisará según las reglas del espacio.</p></div></div>
+          <form id="reservation-form" class="filter-card form-grid">
+            <div><label for="reservation-space">Espacio</label><select id="reservation-space" name="space_id" required></select></div>
+            <div><label for="reservation-start">Desde</label><input id="reservation-start" name="starts_at" type="datetime-local" required></div>
+            <div><label for="reservation-end">Hasta</label><input id="reservation-end" name="ends_at" type="datetime-local" required></div>
+            <button class="button button-primary" type="submit">Enviar solicitud <span aria-hidden="true">→</span></button>
+            <p class="form-hint">El máximo es de cuatro horas consecutivas por persona y espacio.</p>
+          </form>
+          <div class="section-heading compact-heading"><div><p class="eyebrow">SEGUIMIENTO</p><h2>Solicitudes e historial</h2></div></div>
+          <div id="reservations-list" class="card-list"></div>
+        </section>
+
+        <section id="admin-panel" class="content-panel" hidden>
+          <div class="section-heading"><div><p class="eyebrow">GESTIÓN DEL CAMPUS</p><h2>Administración</h2><p>Las acciones disponibles dependen de tus permisos y espacios asignados.</p></div></div>
+          <section id="space-admin-section" class="admin-section" hidden>
+            <div class="section-heading"><div><h3>Gestionar espacios</h3><p>Crea espacios y administra su estado.</p></div></div>
+            <form id="space-form" class="filter-card form-grid">
+              <div><label for="space-name">Nombre</label><input id="space-name" name="name" maxlength="120" required></div>
+              <div><label for="space-type">Tipo</label><select id="space-type" name="space_type" required><option value="LABORATORIO">Laboratorio</option><option value="AUDITORIO">Auditorio</option><option value="SALA_COMPUTO">Sala de cómputo</option><option value="SALON">Salón</option></select></div>
+              <div><label for="space-capacity">Capacidad</label><input id="space-capacity" name="capacity" type="number" min="1" required></div>
+              <div><label for="space-location">Ubicación</label><input id="space-location" name="location" maxlength="255" required></div>
+              <button class="button button-primary" type="submit">Agregar espacio</button>
+            </form>
+            <div id="admin-spaces-list" class="card-list"></div>
+          </section>
+          <section id="reservation-admin-section" class="admin-section" hidden>
+            <div class="section-heading"><div><h3>Solicitudes por revisar</h3><p>Aprueba o rechaza solicitudes de tus espacios asignados.</p></div></div>
+            <div id="review-list" class="card-list"></div>
+          </section>
+          <section id="account-admin-section" class="admin-section" hidden>
+            <div class="section-heading"><div><h3>Cuentas y roles</h3><p>Administra accesos y asignaciones autorizadas.</p></div></div>
+            <form id="role-form" class="filter-card form-grid">
+              <div><label for="role-user-id">ID de cuenta</label><input id="role-user-id" name="user_id" type="number" min="1" required></div>
+              <div><label for="role-name">Rol a asignar</label><select id="role-name" name="role_name"><option value="DOCENTE">Docente</option><option value="ADMIN_ESPACIOS">Administrador de espacios</option><option value="ADMIN_SISTEMA">Administrador del sistema</option></select></div>
+              <button class="button button-secondary" type="submit">Asignar rol</button>
+            </form>
+            <form id="space-assignment-form" class="filter-card form-grid">
+              <div><label for="assignment-user-id">ID de administrador de espacios</label><input id="assignment-user-id" name="user_id" type="number" min="1" required></div>
+              <div><label for="assignment-space-id">ID del espacio</label><input id="assignment-space-id" name="space_id" type="number" min="1" required></div>
+              <button class="button button-secondary" type="submit">Asignar espacio</button>
+            </form>
+            <div id="accounts-list" class="card-list"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="history-dialog" class="history-dialog" aria-labelledby="history-title">
+      <div class="dialog-heading"><div><p class="eyebrow">AUDITORÍA</p><h2 id="history-title">Historial de solicitud</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="Cerrar historial">×</button></div>
+      <div id="history-content" class="card-list"></div>
+      <button class="button button-secondary" type="button" data-close-dialog>Cerrar</button>
+    </dialog>
+    <dialog id="space-edit-dialog" class="history-dialog" aria-labelledby="space-edit-title">
+      <div class="dialog-heading"><div><p class="eyebrow">CATÁLOGO DEL CAMPUS</p><h2 id="space-edit-title">Editar espacio</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="Cerrar edición">×</button></div>
+      <form id="space-edit-form" class="form-stack">
+        <input type="hidden" name="space_id">
+        <label for="edit-space-name">Nombre</label><input id="edit-space-name" name="name" maxlength="120" required>
+        <label for="edit-space-type">Tipo</label><select id="edit-space-type" name="space_type" required><option value="LABORATORIO">Laboratorio</option><option value="AUDITORIO">Auditorio</option><option value="SALA_COMPUTO">Sala de cómputo</option><option value="SALON">Salón</option></select>
+        <label for="edit-space-capacity">Capacidad</label><input id="edit-space-capacity" name="capacity" type="number" min="1" required>
+        <label for="edit-space-location">Ubicación</label><input id="edit-space-location" name="location" maxlength="255" required>
+        <button class="button button-primary" type="submit">Guardar cambios</button>
+      </form>
+    </dialog>
+    <footer class="site-footer"><span>Campus · Reservas Académicas</span><a href="/docs" target="_blank" rel="noreferrer">Documentación de la API</a></footer>
+  </body>
+</html>
