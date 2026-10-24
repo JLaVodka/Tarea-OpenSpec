@@ -1,10 +1,10 @@
 # Propuesta: interfaz web para reservas académicas
 
-## Por qué
+## Why
 
 La entrega actual ofrece una API REST y su documentación OpenAPI. Abrir rutas como `/auth/register` en la barra del navegador envía una petición `GET`, mientras que esa operación requiere `POST`; por eso el navegador muestra `Method Not Allowed`. La API funciona, pero no ofrece una interfaz visual para presentar el flujo institucional.
 
-## Qué cambia
+## What Changes
 
 Se propone incluir una interfaz web sencilla, en español y adaptable a escritorio y móvil, para que estudiantes, docentes y administradores puedan utilizar los casos de uso ya aprobados sin invocar manualmente la API.
 
