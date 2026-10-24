@@ -6,7 +6,7 @@ Sistema universitario para centralizar solicitudes y reservas de laboratorios, a
 
 ## Alcance inicial
 
-La prioridad es una API REST funcional y probada. Se incluyen usuarios y autenticación, roles/permisos, gestión de espacios, solicitudes, consulta de disponibilidad, prevención de solapamientos, aprobación/rechazo, cancelación e historial. La interfaz web completa, SSO, calendarios externos, notificaciones, recurrencias y despliegue productivo están fuera del alcance inicial.
+La entrega incluye una interfaz web sencilla en español servida por FastAPI y una API REST funcional y probada. Se incluyen usuarios y autenticación, roles/permisos, gestión de espacios, solicitudes, consulta de disponibilidad, prevención de solapamientos, aprobación/rechazo, cancelación e historial. La interfaz se implementará con HTML, CSS y JavaScript sin framework separado; las reglas y permisos permanecen en el servidor. Un comando local interactivo provisionará el primer administrador del sistema sin credenciales predeterminadas ni alta pública privilegiada. SSO, calendarios externos, notificaciones, recurrencias, aplicación móvil y despliegue productivo quedan fuera del alcance inicial.
 
 ## Arquitectura
 
