@@ -59,7 +59,7 @@ def test_cli_hides_password_and_does_not_print_it(db_session, monkeypatch, capsy
     factory = sessionmaker(bind=db_session.get_bind(), expire_on_commit=False)
     monkeypatch.setattr(bootstrap_admin, "SessionLocal", factory)
     monkeypatch.setattr("builtins.input", lambda _prompt: "admin@university.edu")
-    monkeypatch.setattr("getpass.getpass", lambda _prompt: "never-print-this-password")
+    monkeypatch.setattr(bootstrap_admin, "getpass", lambda _prompt: "never-print-this-password")
 
     bootstrap_admin.main()
 
