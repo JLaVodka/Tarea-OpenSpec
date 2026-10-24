@@ -15,6 +15,8 @@ Monolito modular en capas: routers HTTP, servicios de aplicación/reglas de nego
 ## Stack aprobado en el plan
 
 - Python 3 y FastAPI para la API.
+- Uvicorn para servir API e interfaz desde el mismo proceso ASGI.
+- HTML, CSS y JavaScript nativos, servidos por FastAPI sin framework frontend separado.
 - SQLAlchemy 2 y Pydantic.
 - SQLite para desarrollo/pruebas, con diseño portable a PostgreSQL.
 - JWT y contraseñas con hash Argon2 o bcrypt.
