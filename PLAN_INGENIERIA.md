@@ -154,6 +154,7 @@ app/
   reservations/           # solicitudes, estados y reglas transaccionales
   availability/           # consulta de disponibilidad
   audit/                  # eventos e historial
+  web/static/             # interfaz HTML, CSS, JavaScript e icono local
 tests/
   unit/
   integration/
@@ -165,7 +166,7 @@ La agrupación por módulo mantiene juntos los artefactos de una capacidad; `cor
 
 ### Ajuste documentado durante la implementación
 
-La implementación conserva el monolito modular, FastAPI, Pydantic y SQLAlchemy, pero concreta la organización con estos ajustes: disponibilidad y auditoría viven dentro del módulo `reservations`; no hay paquetes de repositorios separados y las operaciones de persistencia usan directamente `Session` en servicios y algunas rutas; las pruebas están agrupadas por capacidad en `tests/` en vez de subcarpetas unitarias/integración/reglas. La decisión se tomó para mantener juntas las reglas que comparten el modelo `Reservation` y evitar clases repositorio que solo reenviarían llamadas de SQLAlchemy en este prototipo de un único motor activo. Se descarta la separación física inmediata de `availability`, `audit` y repositorios por el coste de mantenimiento adicional en esta escala.
+La implementación conserva el monolito modular, FastAPI, Pydantic y SQLAlchemy, pero concreta la organización con estos ajustes: disponibilidad y auditoría viven dentro del módulo `reservations`; la interfaz se sirve desde `app/web/static` en el mismo origen; la provisión del primer administrador vive en `app/users/bootstrap_admin.py`; no hay paquetes de repositorios separados y las operaciones de persistencia usan directamente `Session` en servicios y algunas rutas; las pruebas están agrupadas por capacidad en `tests/` en vez de subcarpetas unitarias/integración/reglas. La decisión se tomó para mantener juntas las reglas que comparten el modelo `Reservation` y evitar clases repositorio que solo reenviarían llamadas de SQLAlchemy en este prototipo de un único motor activo. Se descarta la separación física inmediata de `availability`, `audit` y repositorios por el coste de mantenimiento adicional en esta escala.
 
 El impacto es acoplamiento mayor entre algunos módulos HTTP y SQLAlchemy y una vía de cambio de persistencia menos aislada. Las reglas transaccionales críticas de reservas siguen centralizadas en `app/reservations/service.py` y cubiertas por pruebas; antes de añadir una segunda base de datos o escalar el despliegue, se debe extraer la persistencia de los routers a servicios/repositorios y volver a ejecutar la suite de concurrencia contra PostgreSQL.
 
@@ -304,3 +305,4 @@ El estudiante, como responsable técnico, aprueba este plan y cada puerta de fas
 | 0.3 | 2026-10-22 | Se incorpora la regla institucional aprobada de máximo cuatro horas consecutivas por persona y espacio: cuatro horas inclusive, acumulación de solicitudes pendientes/aprobadas contiguas, y exclusión de cuentas administradoras. La regla afecta las validaciones de solicitudes y su estrategia de concurrencia; no requiere migración de datos. |
 | 0.4 | 2026-10-22 | Se documenta el ajuste de estructura real: disponibilidad/auditoría agrupadas en `reservations`, persistencia ORM directa desde servicios y algunas rutas y pruebas agrupadas por capacidad. Se registra la justificación, el acoplamiento resultante y el trabajo requerido antes de introducir otro motor o despliegue multiinstancia. |
 | 0.5 | 2026-10-23 | Por solicitud y aprobación del estudiante, la primera entrega incluye una interfaz web en español servida por FastAPI, sin framework frontend, y un comando local interactivo para provisionar el primer administrador. Se actualizan alcance, prioridades y stack; la API conserva autoridad sobre validación y permisos. Calendario, notificaciones, SSO y despliegue productivo siguen fuera del alcance. |
+| 0.6 | 2026-10-23 | Se documenta la ubicación real de la interfaz (`app/web/static`) y del comando de provisión inicial (`app/users/bootstrap_admin.py`) en la estructura del prototipo, conservando el mismo origen FastAPI y sin introducir un proceso frontend adicional. |
